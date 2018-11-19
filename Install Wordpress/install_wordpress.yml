@@ -1,0 +1,58 @@
+---
+- hosts: wordpress_nodes
+  become: yes
+  tasks:
+    - name: "Let's create sone Hello World file"
+      file:
+        path: ~/HelloWorld
+        state: touch
+    - name: "Install apache server"
+      yum:
+        name: httpd
+        state: latest
+    - name: "Install my sqls"
+      yum:
+        name: "{{packages}}"
+        state: present
+      vars:
+        packages:
+          - mariadb
+          - mariadb-server
+    - name: "Install php"
+      yum:
+        name: "{{packages}}"
+        state: latest
+      vars:
+        packages:
+          - php-mysql
+          - php
+          - MySQL-python
+    - name: "Download wp"
+      get_url:
+        url: https://wordpress.org/latest.zip
+        dest: /tmp/wordpress.zip
+    - name: "Unarchive wp to destination"
+      unarchive: 
+        src: /tmp/wordpress.zip
+        dest: /var/www
+        remote_src: yes
+    - name: "Start service mariadb, if not started"
+      service:
+        name: mariadb
+        state: started
+    - name: "Create database named wp_database"
+      mysql_db:
+        name: wp_database
+        state: present
+    - name: "Put apache config to the right place"
+      copy: 
+        src: ./templates/blog.conf
+        dest: /etc/httpd/conf.d/blog.conf
+    - name: "Start service httpd, if not started"
+      service:
+        name: httpd
+        state: restarted
+    - name: "Copy wp-config"
+      copy:
+        src: ./templates/wp-config.php
+        dest: /var/www/wordpress/wp-config.php

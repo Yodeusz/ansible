@@ -1,0 +1,22 @@
+---
+- hosts: imageme_nodes
+  become: yes
+  tasks:
+    - name: "Install git"
+      yum:
+        name: git
+        state: latest
+    - name: "Clone git repository with ImageMe"
+      git:
+        repo: https://github.com/jkanclerz/google-search-python.git
+        version: master
+        dest: home/ec2-user/ImageMe
+    - name: "Copy file setting EARCH_ENGINE_ID and GOOGLE_CLOUD_API_KEY"
+      copy: 
+        src: ./templates/.script
+        dest: home/ec2-user/.script
+    - name: "Copy script and set access rights"
+      copy:
+        src: ./templates/imageMe.sh
+        dest: /home/ec2-user/imageMe.sh
+        mode: a+x
