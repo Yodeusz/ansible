@@ -1,11 +1,9 @@
 ---
 - hosts: wordpress_nodes
   become: yes
+  vars:
+    project_name: wordpress
   tasks:
-    - name: "Let's create sone Hello World file"
-      file:
-        path: ~/HelloWorld
-        state: touch
     - name: "Install apache server"
       yum:
         name: httpd
@@ -34,15 +32,15 @@
     - name: "Unarchive wp to destination"
       unarchive: 
         src: /tmp/wordpress.zip
-        dest: /var/www
+        dest: "/var/www/{{project_name}}"
         remote_src: yes
     - name: "Start service mariadb, if not started"
       service:
         name: mariadb
         state: started
-    - name: "Create database named wp_database"
+    - name: "Create database"
       mysql_db:
-        name: wp_database
+        name: "{{project_name}}"
         state: present
     - name: "Put apache config to the right place"
       copy: 
