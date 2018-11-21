@@ -1,0 +1,48 @@
+---
+- hosts: owncloud_nodes
+  become: yes
+  vars:
+    project_name: wordpress
+  tasks:
+    - name: "Install apache server"
+      yum:
+        name: httpd
+        state: latest
+    - name: "Install my sqls"
+      yum:
+        name: "{{packages}}"
+        state: present
+      vars:
+        packages:
+          - mariadb
+          - mariadb-server
+    - name: "Install php"
+      yum:
+        name: "{{packages}}"
+        state: latest
+      vars:
+        packages:
+          - php-mysql
+          - php
+          - MySQL-python
+    - name: "Start service mariadb, if not started"
+      service:
+        name: mariadb
+        state: started
+    - name: "Create database"
+      mysql_db:
+        name: "db_owncloud"
+        state: present
+    - name: "Start service httpd, if not started"
+      service:
+        name: httpd
+        state: restarted
+    - name: "Download owncloud"
+      command: rpm --import https://download.owncloud.org/download/repositories/production/CentOS_7/repodata/repomd.xml.key
+    - get_url:
+        url: http://download.owncloud.org/download/repositories/production/CentOS_7/ce:stable.repo
+        dest: /etc/yum.repos.d/ce:stable.repo
+    - command: yum clean expire-cache
+    - yum:
+        name: owncloud-files
+        state: present
